@@ -8,6 +8,29 @@ import { syncGameRulesFromJson } from "./seed-game-rules";
 
 let db: Database | null = null;
 
+function configureDatabase(database: Database): void {
+  database.exec("PRAGMA foreign_keys = ON;");
+  database.exec("PRAGMA journal_mode = WAL;");
+  database.exec("PRAGMA busy_timeout = 10000;");
+  database.exec("PRAGMA synchronous = NORMAL;");
+}
+
+export function withDbTransaction<T>(database: Database, fn: () => T): T {
+  database.exec("BEGIN IMMEDIATE");
+  try {
+    const result = fn();
+    database.exec("COMMIT");
+    return result;
+  } catch (error) {
+    try {
+      database.exec("ROLLBACK");
+    } catch {
+      /* ignore rollback failure */
+    }
+    throw error;
+  }
+}
+
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS game_users (
   id TEXT PRIMARY KEY NOT NULL,
@@ -103,7 +126,7 @@ export function getGameDb(): Database {
 
   mkdirSync(dirname(gameEnv.dbPath), { recursive: true });
   db = new Database(gameEnv.dbPath, { create: true });
-  db.exec("PRAGMA foreign_keys = ON;");
+  configureDatabase(db);
   db.exec(SCHEMA);
   migrateGameCharactersTable(db);
   syncCharacterCatalogFromJson(db);

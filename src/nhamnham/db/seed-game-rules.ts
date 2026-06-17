@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { gameEnv } from "../config/env";
-import { getGameDb } from "./client";
+import type { Database } from "bun:sqlite";
+import { getGameDb, withDbTransaction } from "./client";
 
 export type GameRulesJson = {
   metaComida?: number;
@@ -61,42 +62,44 @@ export function normalizeGameRules(input: GameRulesJson): GameRulesDto {
 }
 
 /** Sincroniza regras do jogo a partir de backend/backup/config.json */
-export function syncGameRulesFromJson(database?: ReturnType<typeof getGameDb>): GameRulesDto {
+export function syncGameRulesFromJson(database?: Database): GameRulesDto {
   const db = database ?? getGameDb();
   const rules = normalizeGameRules(loadGameRulesJson());
   const ts = nowIso();
 
-  db.run(
-    `INSERT INTO game_rules
-      (id, meta_comida, max_vidas, cliques_ovo, cliques_casulo, intervalo_sapo, delay_inicio_sapo,
-       min_comida_antes_sapo, invulneravel_frames, design_width, design_height, updated_at)
-     VALUES ('default', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-     ON CONFLICT(id) DO UPDATE SET
-      meta_comida = excluded.meta_comida,
-      max_vidas = excluded.max_vidas,
-      cliques_ovo = excluded.cliques_ovo,
-      cliques_casulo = excluded.cliques_casulo,
-      intervalo_sapo = excluded.intervalo_sapo,
-      delay_inicio_sapo = excluded.delay_inicio_sapo,
-      min_comida_antes_sapo = excluded.min_comida_antes_sapo,
-      invulneravel_frames = excluded.invulneravel_frames,
-      design_width = excluded.design_width,
-      design_height = excluded.design_height,
-      updated_at = excluded.updated_at`,
-    [
-      rules.metaComida,
-      rules.maxVidas,
-      rules.cliquesOvo,
-      rules.cliquesCasulo,
-      rules.intervaloSapo,
-      rules.delayInicioSapo,
-      rules.minComidaAntesSapo,
-      rules.invulneravelFrames,
-      rules.designWidth,
-      rules.designHeight,
-      ts,
-    ],
-  );
+  withDbTransaction(db, () => {
+    db.run(
+      `INSERT INTO game_rules
+        (id, meta_comida, max_vidas, cliques_ovo, cliques_casulo, intervalo_sapo, delay_inicio_sapo,
+         min_comida_antes_sapo, invulneravel_frames, design_width, design_height, updated_at)
+       VALUES ('default', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET
+        meta_comida = excluded.meta_comida,
+        max_vidas = excluded.max_vidas,
+        cliques_ovo = excluded.cliques_ovo,
+        cliques_casulo = excluded.cliques_casulo,
+        intervalo_sapo = excluded.intervalo_sapo,
+        delay_inicio_sapo = excluded.delay_inicio_sapo,
+        min_comida_antes_sapo = excluded.min_comida_antes_sapo,
+        invulneravel_frames = excluded.invulneravel_frames,
+        design_width = excluded.design_width,
+        design_height = excluded.design_height,
+        updated_at = excluded.updated_at`,
+      [
+        rules.metaComida,
+        rules.maxVidas,
+        rules.cliquesOvo,
+        rules.cliquesCasulo,
+        rules.intervaloSapo,
+        rules.delayInicioSapo,
+        rules.minComidaAntesSapo,
+        rules.invulneravelFrames,
+        rules.designWidth,
+        rules.designHeight,
+        ts,
+      ],
+    );
+  });
 
   console.log("[nhamnham] regras do jogo sincronizadas (backup/config.json → game_rules)");
   return rules;
