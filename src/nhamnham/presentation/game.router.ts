@@ -8,6 +8,7 @@ import {
   sessionService,
 } from "../application/game.service";
 import { characterCatalogService } from "../application/character-catalog.service";
+import { gameRulesService } from "../application/game-rules.service";
 import {
   createSessionBodySchema,
   loginBodySchema,
@@ -101,6 +102,26 @@ export const gameRouter = new Elysia({ prefix: "/api/v1/game", tags: ["NHAMNHAM"
     },
     {
       detail: { summary: "Sincronizar catálogo a partir do criancas.json" },
+    },
+  )
+  .get(
+    "/rules",
+    () => {
+      const rules = gameRulesService.getActive();
+      return success("Regras do jogo", { data: rules });
+    },
+    {
+      detail: { summary: "Regras globais (metaComida, vidas, ovo, sapo…)" },
+    },
+  )
+  .post(
+    "/rules/sync",
+    () => {
+      const rules = gameRulesService.syncFromJson();
+      return success("Regras sincronizadas", { data: rules });
+    },
+    {
+      detail: { summary: "Sincronizar regras a partir do backup/config.json" },
     },
   )
   .get(

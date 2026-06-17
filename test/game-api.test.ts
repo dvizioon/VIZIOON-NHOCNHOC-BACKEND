@@ -86,6 +86,12 @@ describe("NHAMNHAM game API", () => {
     expect(charsJson.success).toBe(true);
     expect(charsJson.data.length).toBeGreaterThan(0);
 
+    const rulesRes = await app.handle(new Request("http://localhost/api/v1/game/rules"));
+    const rulesJson = await rulesRes.json();
+    expect(rulesJson.success).toBe(true);
+    expect(rulesJson.data.maxVidas).toBe(3);
+    expect(rulesJson.data.metaComida).toBe(24);
+
     const { closeGameDb } = await import("../src/nhamnham/db/client");
     closeGameDb();
   });

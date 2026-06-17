@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "bun run --watch src/nhamnham/main.ts",
     "start": "bun run src/nhamnham/main.ts",
+    "sync:characters": "bun run src/nhamnham/scripts/sync-characters.ts",
     "test": "bun test",
     "test:watch": "bun test --watch"
   },

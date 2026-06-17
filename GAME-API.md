@@ -18,19 +18,33 @@ bun run dev
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| GET | `/api/v1/game/characters` | Catálogo de personagens cadastrados |
+| GET | `/api/v1/game/characters` | Catálogo (campo `id` = `criancas.json`) |
 | POST | `/api/v1/game/characters` | Cadastrar personagem |
-| POST | `/api/v1/game/characters/sync` | Sincronizar do `criancas.json` |
+| POST | `/api/v1/game/characters/sync` | Re-sincronizar do `criancas.json` |
 | POST | `/api/v1/game/session/guest` | Visitante (UUID temporário) |
 | POST | `/api/v1/game/login` | Conectar com usuário cadastrado |
 | POST | `/api/v1/game/session` | Cadastro (nome + idade) |
 | GET | `/api/v1/game/me` | Perfil (Bearer token) |
-| PATCH | `/api/v1/game/config` | Volume e preferências |
+| GET | `/api/v1/game/rules` | Regras do jogo (`metaComida`, vidas, ovo, sapo…) |
+| POST | `/api/v1/game/rules/sync` | Re-sincronizar do `backup/config.json` |
+| PATCH | `/api/v1/game/config` | Volume e preferências do jogador |
 | GET/POST | `/api/v1/game/persons` | Personagens escolhidos |
 | POST | `/api/v1/game/scores` | Pontuação por personagem |
 | GET | `/api/v1/game/scores/:personId` | Histórico |
 
 **Visitante:** id temporário, não persiste personagem/score no servidor.
+
+**Personagens:** catálogo em `backend/backup/criancas.json`. Ao subir o backend, sincroniza SQLite + copia sprites para `backend/storage/characters/{uuid}/`. O jogo busca a lista em `GET /api/v1/game/characters` (conta ou visitante).
+
+- `id` — UUID no banco
+- `personKey` — slug do personagem (`anna`, `joao_miguel`) = id dos sprites
+- `cabeca` — URL pública: `/storage/characters/{uuid}/head.png`
+
+**Regras:** `backend/backup/config.json` → tabela `game_rules`. O jogo busca em `GET /api/v1/game/rules`.
+
+```bash
+bun run sync:characters   # força sync manual
+```
 
 ## Frontend
 

@@ -1,10 +1,20 @@
 import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
 import { openapi } from "@elysiajs/openapi";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { toAppError } from "../shared/errors/unwrap-error";
 import { gameEnv } from "./config/env";
 import { getGameDb } from "./db/client";
 import { gameRouter } from "./presentation/game.router";
+
+function resolveStorageFile(relativePath: string): string | null {
+  const base = resolve(gameEnv.storagePath);
+  const filePath = resolve(base, relativePath);
+  if (!filePath.startsWith(base)) return null;
+  if (!existsSync(filePath)) return null;
+  return filePath;
+}
 
 export function createGameApp() {
   getGameDb();
@@ -22,7 +32,18 @@ export function createGameApp() {
       success: true,
       service: "nhamnham-game",
       db: gameEnv.dbPath,
+      storage: gameEnv.storagePath,
     }))
+    .get("/storage/*", async ({ request, set }) => {
+      const url = new URL(request.url);
+      const relative = decodeURIComponent(url.pathname.replace(/^\/storage\//, ""));
+      const filePath = resolveStorageFile(relative);
+      if (!filePath) {
+        set.status = 404;
+        return { success: false, message: "Arquivo não encontrado" };
+      }
+      return Bun.file(filePath);
+    })
     .use(gameRouter)
     .use(
       openapi({

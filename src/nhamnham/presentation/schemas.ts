@@ -36,12 +36,14 @@ export const saveScoreBodySchema = z.object({
 
 export const registerCharacterBodySchema = z.object({
   personKey: z.string().min(1).max(64),
+  id: z.string().min(1).max(64).optional(),
   nome: z.string().min(1).max(64),
   nomeCompleto: z.string().max(128).optional().nullable(),
   genero: z.string().max(16).optional().nullable(),
   tipo: z.string().max(32).optional().nullable(),
   personalidade: z.string().max(512).optional().nullable(),
   cabecaPath: z.string().max(256).optional().nullable(),
+  cabeca: z.string().max(256).optional().nullable(),
   ativo: z.boolean().optional(),
 });
 

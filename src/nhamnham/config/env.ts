@@ -26,5 +26,14 @@ export const gameEnv = {
     `http://localhost:${process.env.GAME_PORT ?? 5240}`,
   charactersJsonPath:
     process.env.GAME_CHARACTERS_JSON?.trim() ??
-    resolve(process.cwd(), "../game/public/assets/data/criancas.json"),
+    resolve(process.cwd(), "backup", "criancas.json"),
+  gameRulesJsonPath:
+    process.env.GAME_RULES_JSON?.trim() ??
+    resolve(process.cwd(), "backup", "config.json"),
+  gamePublicPath:
+    process.env.GAME_PUBLIC_PATH?.trim() ??
+    resolve(process.cwd(), "../game/public"),
+  storagePath:
+    process.env.GAME_STORAGE_PATH?.trim() ??
+    resolve(process.cwd(), "storage"),
 } as const;

@@ -2,7 +2,9 @@ import { Database } from "bun:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { gameEnv } from "../config/env";
-import { seedCharacterCatalog } from "./seed-characters";
+import { migrateGameCharactersTable } from "./migrate-characters";
+import { syncCharacterCatalogFromJson } from "./seed-characters";
+import { syncGameRulesFromJson } from "./seed-game-rules";
 
 let db: Database | null = null;
 
@@ -21,19 +23,22 @@ CREATE INDEX IF NOT EXISTS idx_game_users_token ON game_users(session_token);
 CREATE INDEX IF NOT EXISTS idx_game_users_expires ON game_users(expires_at);
 
 CREATE TABLE IF NOT EXISTS game_characters (
-  person_key TEXT PRIMARY KEY NOT NULL,
+  id TEXT PRIMARY KEY NOT NULL,
+  person_key TEXT NOT NULL UNIQUE,
   nome TEXT NOT NULL,
   nome_completo TEXT,
   genero TEXT,
   tipo TEXT,
   personalidade TEXT,
   cabeca_path TEXT,
+  cabeca_storage TEXT,
   ativo INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_game_characters_ativo ON game_characters(ativo);
+CREATE INDEX IF NOT EXISTS idx_game_characters_person_key ON game_characters(person_key);
 
 CREATE TABLE IF NOT EXISTS game_user_configs (
   user_id TEXT PRIMARY KEY NOT NULL,
@@ -76,6 +81,21 @@ CREATE TABLE IF NOT EXISTS game_scores (
 
 CREATE INDEX IF NOT EXISTS idx_game_scores_person ON game_scores(person_id);
 CREATE INDEX IF NOT EXISTS idx_game_scores_user ON game_scores(user_id);
+
+CREATE TABLE IF NOT EXISTS game_rules (
+  id TEXT PRIMARY KEY NOT NULL DEFAULT 'default',
+  meta_comida INTEGER NOT NULL DEFAULT 24,
+  max_vidas INTEGER NOT NULL DEFAULT 3,
+  cliques_ovo INTEGER NOT NULL DEFAULT 4,
+  cliques_casulo INTEGER NOT NULL DEFAULT 2,
+  intervalo_sapo INTEGER NOT NULL DEFAULT 12000,
+  delay_inicio_sapo INTEGER NOT NULL DEFAULT 25000,
+  min_comida_antes_sapo INTEGER NOT NULL DEFAULT 4,
+  invulneravel_frames INTEGER NOT NULL DEFAULT 120,
+  design_width INTEGER NOT NULL DEFAULT 1280,
+  design_height INTEGER NOT NULL DEFAULT 720,
+  updated_at TEXT NOT NULL
+);
 `;
 
 export function getGameDb(): Database {
@@ -85,7 +105,9 @@ export function getGameDb(): Database {
   db = new Database(gameEnv.dbPath, { create: true });
   db.exec("PRAGMA foreign_keys = ON;");
   db.exec(SCHEMA);
-  seedCharacterCatalog();
+  migrateGameCharactersTable(db);
+  syncCharacterCatalogFromJson(db);
+  syncGameRulesFromJson(db);
   return db;
 }
 
