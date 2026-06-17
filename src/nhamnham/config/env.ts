@@ -12,6 +12,9 @@ function parseOrigins(): string[] {
     .filter(Boolean);
 }
 
+/** Caminhos fixos — editar backup/*.json e reiniciar o backend (ou POST …/sync) */
+const BACKUP_DIR = resolve(process.cwd(), "backup");
+
 export const gameEnv = {
   port: Number(process.env.GAME_PORT ?? 5240),
   host: process.env.GAME_HOST?.trim() || "0.0.0.0",
@@ -24,15 +27,12 @@ export const gameEnv = {
   backendUrl:
     process.env.GAME_BACKEND_URL?.trim() ??
     `http://localhost:${process.env.GAME_PORT ?? 5240}`,
-  charactersJsonPath:
-    process.env.GAME_CHARACTERS_JSON?.trim() ??
-    resolve(process.cwd(), "backup", "criancas.json"),
-  gameRulesJsonPath:
-    process.env.GAME_RULES_JSON?.trim() ??
-    resolve(process.cwd(), "backup", "config.json"),
-  gamePublicPath:
-    process.env.GAME_PUBLIC_PATH?.trim() ??
-    resolve(process.cwd(), "../game/public"),
+  /** Fonte do sync — não precisa .env */
+  charactersJsonPath: resolve(BACKUP_DIR, "criancas.json"),
+  gameRulesJsonPath: resolve(BACKUP_DIR, "config.json"),
+  /** PNGs do jogo (origem do sync) */
+  gamePublicPath: resolve(process.cwd(), "../game/public"),
+  /** Destino dos assets por personagem (uuid) — servido em /storage/… */
   storagePath:
     process.env.GAME_STORAGE_PATH?.trim() ??
     resolve(process.cwd(), "storage"),

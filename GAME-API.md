@@ -34,13 +34,9 @@ bun run dev
 
 **Visitante:** id temporário, não persiste personagem/score no servidor.
 
-**Personagens:** catálogo em `backend/backup/criancas.json`. Ao subir o backend, sincroniza SQLite + copia sprites para `backend/storage/characters/{uuid}/`. O jogo busca a lista em `GET /api/v1/game/characters` (conta ou visitante).
+**Personagens:** edite `backend/backup/criancas.json` → sync automático ao subir + `POST /characters/sync`. Assets copiados para `backend/storage/characters/{uuid}/`.
 
-- `id` — UUID no banco
-- `personKey` — slug do personagem (`anna`, `joao_miguel`) = id dos sprites
-- `cabeca` — URL pública: `/storage/characters/{uuid}/head.png`
-
-**Regras:** `backend/backup/config.json` → tabela `game_rules`. O jogo busca em `GET /api/v1/game/rules`.
+**Regras:** edite `backend/backup/config.json` → sync automático + `POST /rules/sync`.
 
 ```bash
 bun run sync:characters   # força sync manual
