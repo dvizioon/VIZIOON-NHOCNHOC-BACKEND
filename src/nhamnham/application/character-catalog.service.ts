@@ -1,5 +1,5 @@
 import { AppError } from "../../shared/errors/app-error";
-import { buildStoragePublicUrl } from "./character-assets";
+import { normalizeCabecaFilename, resolveCabecaPublicUrls } from "./character-assets";
 import { getGameDb } from "../db/client";
 import { syncCharacterCatalogFromJson } from "../db/seed-characters";
 import { saveCharacterRecord } from "./character-sync";
@@ -34,7 +34,10 @@ type CharacterRow = {
 };
 
 function mapRow(row: CharacterRow): GameCharacterDto {
-  const cabecaUrl = buildStoragePublicUrl(row.cabeca_storage);
+  const { cabeca, cabecaPath } = resolveCabecaPublicUrls(
+    row.cabeca_path,
+    row.cabeca_storage,
+  );
   return {
     id: row.id,
     personKey: row.person_key,
@@ -43,8 +46,8 @@ function mapRow(row: CharacterRow): GameCharacterDto {
     genero: row.genero,
     tipo: row.tipo,
     personalidade: row.personalidade,
-    cabecaPath: row.cabeca_path,
-    cabeca: cabecaUrl,
+    cabecaPath,
+    cabeca,
     ativo: row.ativo === 1,
   };
 }
@@ -121,7 +124,7 @@ export const characterCatalogService = {
       genero: input.genero ?? null,
       tipo: input.tipo ?? null,
       personalidade: input.personalidade ?? null,
-      cabecaPath: input.cabecaPath ?? input.cabeca ?? null,
+      cabecaPath: normalizeCabecaFilename(input.cabecaPath ?? input.cabeca ?? null),
       ativo: input.ativo !== false,
     });
 

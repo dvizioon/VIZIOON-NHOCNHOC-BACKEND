@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { gameEnv } from "../config/env";
-import { syncCharacterHeadAsset } from "../application/character-assets";
+import { syncCharacterHeadAsset, normalizeCabecaFilename } from "../application/character-assets";
 import { findExistingCharacter, saveCharacterRecord } from "../application/character-sync";
 import { randomUUID } from "node:crypto";
 import { getGameDb } from "./client";
@@ -53,7 +53,12 @@ export function syncCharacterCatalogFromJson(database?: ReturnType<typeof getGam
       nomeCompleto: item.nomeCompleto ?? null,
     });
     const characterId = existing?.id ?? randomUUID();
-    const cabecaStorage = syncCharacterHeadAsset(characterId, item.cabeca ?? null);
+    const cabecaFile = normalizeCabecaFilename(item.cabeca ?? null);
+    const cabecaStorage = syncCharacterHeadAsset(
+      characterId,
+      cabecaFile,
+      existing?.cabeca_storage ?? null,
+    );
 
     const { created: isNew } = saveCharacterRecord(db, {
       id: characterId,
@@ -63,7 +68,7 @@ export function syncCharacterCatalogFromJson(database?: ReturnType<typeof getGam
       genero: item.genero ?? null,
       tipo: item.tipo ?? null,
       personalidade: item.personalidade ?? null,
-      cabecaPath: item.cabeca ?? null,
+      cabecaPath: cabecaFile,
       cabecaStorage,
       ativo: item.ativo !== false,
     });
@@ -82,13 +87,6 @@ export function syncCharacterCatalogFromJson(database?: ReturnType<typeof getGam
     );
   }
 
-  const assetsRoot = gameEnv.gamePublicPath;
-  if (!existsSync(assetsRoot) && list.some((item) => item.cabeca)) {
-    console.warn(
-      `[nhamnham] pasta de assets não existe: ${assetsRoot} — copie sprites para backend/assets/sprites/characters/childs/ ou defina GAME_PUBLIC_PATH`,
-    );
-  }
-
   console.log(
     `[nhamnham] catálogo: ${keys.length} personagens (${created} novos, ${updated} atualizados)`,
   );
@@ -101,4 +99,4 @@ export function seedCharacterCatalog(force = false): number {
   return syncCharacterCatalogFromJson();
 }
 
-export { buildStoragePublicUrl } from "../application/character-assets";
+export { resolveCabecaPublicUrls } from "../application/character-assets";
