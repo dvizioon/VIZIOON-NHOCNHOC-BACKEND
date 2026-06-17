@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
 function parseOrigins(): string[] {
@@ -14,6 +15,16 @@ function parseOrigins(): string[] {
 
 /** Caminhos fixos — editar backup/*.json e reiniciar o backend (ou POST …/sync) */
 const BACKUP_DIR = resolve(process.cwd(), "backup");
+const LOCAL_ASSETS = resolve(process.cwd(), "assets");
+const SIBLING_GAME_PUBLIC = resolve(process.cwd(), "../game/public");
+
+function resolveGamePublicPath(): string {
+  if (process.env.GAME_PUBLIC_PATH?.trim()) {
+    return resolve(process.cwd(), process.env.GAME_PUBLIC_PATH.trim());
+  }
+  if (existsSync(LOCAL_ASSETS)) return LOCAL_ASSETS;
+  return SIBLING_GAME_PUBLIC;
+}
 
 export const gameEnv = {
   port: Number(process.env.GAME_PORT ?? 5240),
@@ -30,8 +41,8 @@ export const gameEnv = {
   /** Fonte do sync — não precisa .env */
   charactersJsonPath: resolve(BACKUP_DIR, "criancas.json"),
   gameRulesJsonPath: resolve(BACKUP_DIR, "config.json"),
-  /** PNGs do jogo (origem do sync) */
-  gamePublicPath: resolve(process.cwd(), "../game/public"),
+  /** Origem dos PNGs no sync — backend/assets (Coolify) ou ../game/public (local) */
+  gamePublicPath: resolveGamePublicPath(),
   /** Destino dos assets por personagem (uuid) — servido em /storage/… */
   storagePath:
     process.env.GAME_STORAGE_PATH?.trim() ??

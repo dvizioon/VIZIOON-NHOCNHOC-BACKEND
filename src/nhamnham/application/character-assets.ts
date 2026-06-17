@@ -23,7 +23,9 @@ export function syncCharacterHeadAsset(
     : resolveGamePublicAsset(cabecaPath);
 
   if (!source || !existsSync(source)) {
-    console.warn(`[nhamnham] asset não encontrado: ${cabecaPath}`);
+    if (gameEnv.nodeEnv !== "production") {
+      console.warn(`[nhamnham] asset não encontrado: ${cabecaPath} (procurado em ${gameEnv.gamePublicPath})`);
+    }
     return null;
   }
 

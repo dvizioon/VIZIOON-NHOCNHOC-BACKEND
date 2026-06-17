@@ -82,6 +82,13 @@ export function syncCharacterCatalogFromJson(database?: ReturnType<typeof getGam
     );
   }
 
+  const assetsRoot = gameEnv.gamePublicPath;
+  if (!existsSync(assetsRoot) && list.some((item) => item.cabeca)) {
+    console.warn(
+      `[nhamnham] pasta de assets não existe: ${assetsRoot} — copie sprites para backend/assets/sprites/characters/childs/ ou defina GAME_PUBLIC_PATH`,
+    );
+  }
+
   console.log(
     `[nhamnham] catálogo: ${keys.length} personagens (${created} novos, ${updated} atualizados)`,
   );
