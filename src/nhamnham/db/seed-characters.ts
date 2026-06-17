@@ -1,10 +1,8 @@
-import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { gameEnv } from "../config/env";
-import {
-  buildStoragePublicUrl,
-  syncCharacterHeadAsset,
-} from "../application/character-assets";
+import { syncCharacterHeadAsset } from "../application/character-assets";
+import { findExistingCharacter, saveCharacterRecord } from "../application/character-sync";
+import { randomUUID } from "node:crypto";
 import { getGameDb } from "./client";
 
 export type CriancaJson = {
@@ -41,49 +39,39 @@ export function syncCharacterCatalogFromJson(database?: ReturnType<typeof getGam
 
   const ts = nowIso();
   const keys: string[] = [];
-
-  const findStmt = db.prepare(`SELECT id FROM game_characters WHERE person_key = ?`);
-
-  const upsertStmt = db.prepare(`
-    INSERT INTO game_characters
-      (id, person_key, nome, nome_completo, genero, tipo, personalidade, cabeca_path, cabeca_storage, ativo, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(person_key) DO UPDATE SET
-      nome = excluded.nome,
-      nome_completo = excluded.nome_completo,
-      genero = excluded.genero,
-      tipo = excluded.tipo,
-      personalidade = excluded.personalidade,
-      cabeca_path = excluded.cabeca_path,
-      cabeca_storage = excluded.cabeca_storage,
-      ativo = excluded.ativo,
-      updated_at = excluded.updated_at
-  `);
+  let created = 0;
+  let updated = 0;
 
   for (const item of list) {
     const personKey = item.id?.trim();
     const nome = item.nome?.trim();
     if (!personKey || !nome) continue;
 
-    const existing = findStmt.get(personKey) as { id: string } | null;
+    const existing = findExistingCharacter(db, {
+      personKey,
+      nome,
+      nomeCompleto: item.nomeCompleto ?? null,
+    });
     const characterId = existing?.id ?? randomUUID();
     const cabecaStorage = syncCharacterHeadAsset(characterId, item.cabeca ?? null);
 
-    keys.push(personKey);
-    upsertStmt.run(
-      characterId,
+    const { created: isNew } = saveCharacterRecord(db, {
+      id: characterId,
       personKey,
       nome,
-      item.nomeCompleto ?? null,
-      item.genero ?? null,
-      item.tipo ?? null,
-      item.personalidade ?? null,
-      item.cabeca ?? null,
+      nomeCompleto: item.nomeCompleto ?? null,
+      genero: item.genero ?? null,
+      tipo: item.tipo ?? null,
+      personalidade: item.personalidade ?? null,
+      cabecaPath: item.cabeca ?? null,
       cabecaStorage,
-      item.ativo === false ? 0 : 1,
-      ts,
-      ts,
-    );
+      ativo: item.ativo !== false,
+    });
+
+    if (isNew) created += 1;
+    else updated += 1;
+
+    keys.push(personKey);
   }
 
   if (keys.length > 0) {
@@ -95,7 +83,7 @@ export function syncCharacterCatalogFromJson(database?: ReturnType<typeof getGam
   }
 
   console.log(
-    `[nhamnham] catálogo: ${keys.length} personagens (person_key + uuid, assets em storage/)`,
+    `[nhamnham] catálogo: ${keys.length} personagens (${created} novos, ${updated} atualizados)`,
   );
   return keys.length;
 }
@@ -106,4 +94,4 @@ export function seedCharacterCatalog(force = false): number {
   return syncCharacterCatalogFromJson();
 }
 
-export { buildStoragePublicUrl };
+export { buildStoragePublicUrl } from "../application/character-assets";

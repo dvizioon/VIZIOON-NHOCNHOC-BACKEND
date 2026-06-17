@@ -1,8 +1,8 @@
-import { randomUUID } from "node:crypto";
 import { AppError } from "../../shared/errors/app-error";
-import { buildStoragePublicUrl } from "../application/character-assets";
+import { buildStoragePublicUrl } from "./character-assets";
 import { getGameDb } from "../db/client";
 import { syncCharacterCatalogFromJson } from "../db/seed-characters";
+import { saveCharacterRecord } from "./character-sync";
 
 export interface GameCharacterDto {
   /** UUID do registro no banco */
@@ -109,39 +109,21 @@ export const characterCatalogService = {
     ativo?: boolean;
   }): GameCharacterDto {
     const db = getGameDb();
-    const ts = new Date().toISOString();
     const key = (input.personKey ?? input.id ?? "").trim();
     if (!key) {
       throw new AppError("personKey é obrigatório", 400, "VALIDATION_ERROR");
     }
 
-    db.run(
-      `INSERT INTO game_characters
-        (id, person_key, nome, nome_completo, genero, tipo, personalidade, cabeca_path, cabeca_storage, ativo, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)
-       ON CONFLICT(person_key) DO UPDATE SET
-        nome = excluded.nome,
-        nome_completo = excluded.nome_completo,
-        genero = excluded.genero,
-        tipo = excluded.tipo,
-        personalidade = excluded.personalidade,
-        cabeca_path = excluded.cabeca_path,
-        ativo = excluded.ativo,
-        updated_at = excluded.updated_at`,
-      [
-        randomUUID(),
-        key,
-        input.nome.trim(),
-        input.nomeCompleto ?? null,
-        input.genero ?? null,
-        input.tipo ?? null,
-        input.personalidade ?? null,
-        input.cabecaPath ?? input.cabeca ?? null,
-        input.ativo === false ? 0 : 1,
-        ts,
-        ts,
-      ],
-    );
+    saveCharacterRecord(db, {
+      personKey: key,
+      nome: input.nome.trim(),
+      nomeCompleto: input.nomeCompleto ?? null,
+      genero: input.genero ?? null,
+      tipo: input.tipo ?? null,
+      personalidade: input.personalidade ?? null,
+      cabecaPath: input.cabecaPath ?? input.cabeca ?? null,
+      ativo: input.ativo !== false,
+    });
 
     return this.requireActive(key);
   },
