@@ -1,12 +1,18 @@
 import { t } from "elysia";
 import { z } from "zod";
 
+const playerUsernameSchema = z
+  .string()
+  .min(2)
+  .max(10)
+  .regex(/^[A-Za-z]+$/, "Use só letras, sem espaço ou símbolos");
+
 export const loginBodySchema = z.object({
-  username: z.string().min(2).max(48),
+  username: playerUsernameSchema,
 });
 
 export const createSessionBodySchema = z.object({
-  name: z.string().min(2).max(48),
+  name: playerUsernameSchema,
   age: z.number().int().min(3).max(99).optional().nullable(),
   isGuest: z.boolean().optional(),
 });
@@ -44,6 +50,8 @@ export const registerCharacterBodySchema = z.object({
   personalidade: z.string().max(512).optional().nullable(),
   cabecaPath: z.string().max(256).optional().nullable(),
   cabeca: z.string().max(256).optional().nullable(),
+  vozPath: z.string().max(256).optional().nullable(),
+  voz: z.string().max(256).optional().nullable(),
   ativo: z.boolean().optional(),
 });
 

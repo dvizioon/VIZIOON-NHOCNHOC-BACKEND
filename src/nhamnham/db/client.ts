@@ -3,6 +3,7 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { gameEnv } from "../config/env";
 import { migrateGameCharactersTable } from "./migrate-characters";
+import { migrateCharacterVoiceColumns } from "./migrate-character-voice";
 import { syncCharacterCatalogFromJson } from "./seed-characters";
 import { syncGameRulesFromJson } from "./seed-game-rules";
 
@@ -129,6 +130,7 @@ export function getGameDb(): Database {
   configureDatabase(db);
   db.exec(SCHEMA);
   migrateGameCharactersTable(db);
+  migrateCharacterVoiceColumns(db);
   syncCharacterCatalogFromJson(db);
   syncGameRulesFromJson(db);
   return db;

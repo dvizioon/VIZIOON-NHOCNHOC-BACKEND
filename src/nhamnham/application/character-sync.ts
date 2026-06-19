@@ -11,6 +11,7 @@ type ExistingCharacterRow = {
   id: string;
   person_key: string;
   cabeca_storage: string | null;
+  voz_storage: string | null;
   created_at: string;
 };
 
@@ -25,7 +26,7 @@ export function findExistingCharacter(
 
   const byKey = db
     .query<ExistingCharacterRow, [string]>(
-      `SELECT id, person_key, cabeca_storage, created_at
+      `SELECT id, person_key, cabeca_storage, voz_storage, created_at
        FROM game_characters WHERE person_key = ? COLLATE NOCASE`,
     )
     .get(personKey);
@@ -34,7 +35,7 @@ export function findExistingCharacter(
   if (nomeCompleto) {
     const byFull = db
       .query<ExistingCharacterRow, [string]>(
-        `SELECT id, person_key, cabeca_storage, created_at
+        `SELECT id, person_key, cabeca_storage, voz_storage, created_at
          FROM game_characters
          WHERE nome_completo IS NOT NULL AND lower(trim(nome_completo)) = lower(trim(?))`,
       )
@@ -45,7 +46,7 @@ export function findExistingCharacter(
   return (
     db
       .query<ExistingCharacterRow, [string]>(
-        `SELECT id, person_key, cabeca_storage, created_at
+        `SELECT id, person_key, cabeca_storage, voz_storage, created_at
          FROM game_characters WHERE lower(trim(nome)) = lower(trim(?))`,
       )
       .get(nome) ?? null
@@ -60,6 +61,8 @@ export type SaveCharacterInput = CharacterMatchInput & {
   personalidade?: string | null;
   cabecaPath?: string | null;
   cabecaStorage?: string | null;
+  vozPath?: string | null;
+  vozStorage?: string | null;
   ativo?: boolean;
 };
 
@@ -74,6 +77,7 @@ export function saveCharacterRecord(
   const existing = findExistingCharacter(db, input);
   const id = existing?.id ?? input.id ?? randomUUID();
   const cabecaStorage = input.cabecaStorage ?? existing?.cabeca_storage ?? null;
+  const vozStorage = input.vozStorage ?? existing?.voz_storage ?? null;
 
   if (existing) {
     db.run(
@@ -86,6 +90,8 @@ export function saveCharacterRecord(
         personalidade = ?,
         cabeca_path = ?,
         cabeca_storage = COALESCE(?, cabeca_storage),
+        voz_path = ?,
+        voz_storage = COALESCE(?, voz_storage),
         ativo = ?,
         updated_at = ?
        WHERE id = ?`,
@@ -98,6 +104,8 @@ export function saveCharacterRecord(
         input.personalidade ?? null,
         input.cabecaPath ?? null,
         cabecaStorage,
+        input.vozPath ?? null,
+        vozStorage,
         input.ativo === false ? 0 : 1,
         ts,
         id,
@@ -108,8 +116,8 @@ export function saveCharacterRecord(
 
   db.run(
     `INSERT INTO game_characters
-      (id, person_key, nome, nome_completo, genero, tipo, personalidade, cabeca_path, cabeca_storage, ativo, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, person_key, nome, nome_completo, genero, tipo, personalidade, cabeca_path, cabeca_storage, voz_path, voz_storage, ativo, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       personKey,
@@ -120,6 +128,8 @@ export function saveCharacterRecord(
       input.personalidade ?? null,
       input.cabecaPath ?? null,
       cabecaStorage,
+      input.vozPath ?? null,
+      vozStorage,
       input.ativo === false ? 0 : 1,
       ts,
       ts,

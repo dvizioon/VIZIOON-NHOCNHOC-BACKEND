@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { gameEnv } from "../config/env";
-import { syncCharacterHeadAsset, normalizeCabecaFilename } from "../application/character-assets";
+import { syncCharacterHeadAsset, syncCharacterVoiceAsset, normalizeCabecaFilename, normalizeVozFilename } from "../application/character-assets";
 import { findExistingCharacter, saveCharacterRecord } from "../application/character-sync";
 import { randomUUID } from "node:crypto";
 import type { Database } from "bun:sqlite";
@@ -14,6 +14,8 @@ export type CriancaJson = {
   tipo?: string;
   personalidade?: string;
   cabeca?: string;
+  /** MP3 da apresentação no modal — ex.: larah_sofhia.mp3 */
+  voz?: string;
   ativo?: boolean;
 };
 
@@ -56,10 +58,16 @@ export function syncCharacterCatalogFromJson(database?: Database): number {
       });
       const characterId = existing?.id ?? randomUUID();
       const cabecaFile = normalizeCabecaFilename(item.cabeca ?? null);
+      const vozFile = normalizeVozFilename(item.voz ?? null);
       const cabecaStorage = syncCharacterHeadAsset(
         characterId,
         cabecaFile,
         existing?.cabeca_storage ?? null,
+      );
+      const vozStorage = syncCharacterVoiceAsset(
+        characterId,
+        vozFile,
+        existing?.voz_storage ?? null,
       );
 
       const { created: isNew } = saveCharacterRecord(db, {
@@ -72,6 +80,8 @@ export function syncCharacterCatalogFromJson(database?: Database): number {
         personalidade: item.personalidade ?? null,
         cabecaPath: cabecaFile,
         cabecaStorage,
+        vozPath: vozFile,
+        vozStorage,
         ativo: item.ativo !== false,
       });
 

@@ -1,5 +1,10 @@
 import { AppError } from "../../shared/errors/app-error";
-import { normalizeCabecaFilename, resolveCabecaPublicUrls } from "./character-assets";
+import {
+  normalizeCabecaFilename,
+  normalizeVozFilename,
+  resolveCabecaPublicUrls,
+  resolveVozPublicUrls,
+} from "./character-assets";
 import { getGameDb } from "../db/client";
 import { syncCharacterCatalogFromJson } from "../db/seed-characters";
 import { saveCharacterRecord } from "./character-sync";
@@ -17,6 +22,9 @@ export interface GameCharacterDto {
   cabecaPath: string | null;
   /** URL pública do asset no storage do backend */
   cabeca: string | null;
+  vozPath: string | null;
+  /** URL pública do MP3 da apresentação */
+  voz: string | null;
   ativo: boolean;
 }
 
@@ -30,6 +38,8 @@ type CharacterRow = {
   personalidade: string | null;
   cabeca_path: string | null;
   cabeca_storage: string | null;
+  voz_path: string | null;
+  voz_storage: string | null;
   ativo: number;
 };
 
@@ -38,6 +48,7 @@ function mapRow(row: CharacterRow): GameCharacterDto {
     row.cabeca_path,
     row.cabeca_storage,
   );
+  const { voz, vozPath } = resolveVozPublicUrls(row.voz_path, row.voz_storage);
   return {
     id: row.id,
     personKey: row.person_key,
@@ -48,6 +59,8 @@ function mapRow(row: CharacterRow): GameCharacterDto {
     personalidade: row.personalidade,
     cabecaPath,
     cabeca,
+    vozPath,
+    voz,
     ativo: row.ativo === 1,
   };
 }
@@ -109,6 +122,8 @@ export const characterCatalogService = {
     personalidade?: string | null;
     cabecaPath?: string | null;
     cabeca?: string | null;
+    vozPath?: string | null;
+    voz?: string | null;
     ativo?: boolean;
   }): GameCharacterDto {
     const db = getGameDb();
@@ -125,6 +140,7 @@ export const characterCatalogService = {
       tipo: input.tipo ?? null,
       personalidade: input.personalidade ?? null,
       cabecaPath: normalizeCabecaFilename(input.cabecaPath ?? input.cabeca ?? null),
+      vozPath: normalizeVozFilename(input.vozPath ?? input.voz ?? null),
       ativo: input.ativo !== false,
     });
 

@@ -18,5 +18,6 @@ console.log(`URL pública: ${gameEnv.backendUrl}`);
 console.log(`Docs: ${gameEnv.backendUrl}/docs`);
 console.log(`SQLite: ${gameEnv.dbPath}`);
 console.log(`Cabecas (frontend): ${gameEnv.frontendUrl}/${gameEnv.gamePublicPath}`);
+console.log(`Vozes (frontend): ${gameEnv.frontendUrl}/${gameEnv.gameVoicePublicPath}`);
 console.log(`Cabecas (upload backend): ${gameEnv.assetsPath}/`);
 console.log(`Storage: ${gameEnv.storagePath}`);

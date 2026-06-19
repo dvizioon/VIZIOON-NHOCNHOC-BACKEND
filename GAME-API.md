@@ -34,7 +34,7 @@ bun run dev
 
 **Visitante:** id temporário, não persiste personagem/score no servidor.
 
-**Personagens:** edite `backend/backup/criancas.json` → sync automático ao subir + `POST /characters/sync`. Assets copiados para `backend/storage/characters/{uuid}/`.
+**Personagens:** edite `backend/backup/criancas.json` → sync automático ao subir + `POST /characters/sync`. Assets copiados para `backend/storage/characters/{uuid}/` (`head.png` + `voice.mp3`).
 
 **Regras:** edite `backend/backup/config.json` → sync automático + `POST /rules/sync`.
 

@@ -43,6 +43,10 @@ export const gameEnv = {
   gamePublicPath:
     process.env.GAME_PUBLIC_PATH?.trim() ||
     "assets/sprites/characters/childs/",
+  /** MP3 da apresentação no modal — espelha public/ do frontend */
+  gameVoicePublicPath:
+    process.env.GAME_VOICE_PUBLIC_PATH?.trim() ||
+    "assets/sounds/sfx/childs/",
   /** PNG local no backend — só personagem novo ou imagem atualizada */
   assetsPath: resolve(process.cwd(), "assets"),
   /** Destino público por personagem (uuid) — servido em /storage/… */
