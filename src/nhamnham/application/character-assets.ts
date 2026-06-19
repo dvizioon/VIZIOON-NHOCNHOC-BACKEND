@@ -45,7 +45,7 @@ function resolveBackendPublicFile(publicPath: string, filename: string): string 
 }
 
 function resolveBackendHeadFile(filename: string): string {
-  return resolveBackendPublicFile(gameEnv.gamePublicPath, filename);
+  return resolveBackendPublicFile(gameEnv.gameSpritesPublicPath, filename);
 }
 
 function resolveBackendVoiceFile(filename: string): string {
@@ -59,7 +59,7 @@ export function buildFrontendCabecaUrl(
   const name = normalizeCabecaFilename(filename);
   if (!name) return null;
   if (/^https?:\/\//i.test(name)) return name;
-  return joinPublicUrl(gameEnv.frontendUrl, gameEnv.gamePublicPath, name);
+  return joinPublicUrl(gameEnv.frontendUrl, gameEnv.gameSpritesPublicPath, name);
 }
 
 /** URL da voz no public do frontend */
@@ -105,17 +105,21 @@ export function resolveVozPublicUrls(
 ): { voz: string | null; vozPath: string | null } {
   const filename = normalizeVozFilename(vozPath);
 
+  if (filename) {
+    return {
+      voz: buildFrontendVozUrl(filename),
+      vozPath: filename,
+    };
+  }
+
   if (vozStorage?.trim()) {
     const storageUrl = buildStoragePublicUrl(vozStorage);
     if (storageUrl) {
-      return { voz: storageUrl, vozPath: filename };
+      return { voz: storageUrl, vozPath: null };
     }
   }
 
-  return {
-    voz: buildFrontendVozUrl(filename),
-    vozPath: filename,
-  };
+  return { voz: null, vozPath: null };
 }
 
 /**
@@ -148,8 +152,8 @@ export function syncCharacterHeadAsset(
 }
 
 /**
- * Copia voz de backend/assets → storage/characters/{uuid}/voice.mp3
- * Só quando o MP3 existe localmente.
+ * Copia voz para storage/characters/{uuid}/voice.mp3
+ * Reservado para upload de personagem novo — não usado no sync do criancas.json.
  */
 export function syncCharacterVoiceAsset(
   characterId: string,

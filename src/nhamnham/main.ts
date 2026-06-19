@@ -17,7 +17,7 @@ console.log(`NHAMNHAM Game API em http://${gameEnv.host}:${gameEnv.port}`);
 console.log(`URL pública: ${gameEnv.backendUrl}`);
 console.log(`Docs: ${gameEnv.backendUrl}/docs`);
 console.log(`SQLite: ${gameEnv.dbPath}`);
-console.log(`Cabecas (frontend): ${gameEnv.frontendUrl}/${gameEnv.gamePublicPath}`);
+console.log(`Sprites cabeça (frontend): ${gameEnv.frontendUrl}/${gameEnv.gameSpritesPublicPath}`);
 console.log(`Vozes (frontend): ${gameEnv.frontendUrl}/${gameEnv.gameVoicePublicPath}`);
 console.log(`Cabecas (upload backend): ${gameEnv.assetsPath}/`);
 console.log(`Storage: ${gameEnv.storagePath}`);

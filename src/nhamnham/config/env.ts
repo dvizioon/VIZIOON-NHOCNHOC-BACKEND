@@ -37,10 +37,11 @@ export const gameEnv = {
   charactersJsonPath: resolve(BACKUP_DIR, "criancas.json"),
   gameRulesJsonPath: resolve(BACKUP_DIR, "config.json"),
   /**
-   * Pasta pública das cabeças no frontend (public/).
+   * Sprites das cabeças no public do jogo (frontend).
    * Ex.: assets/sprites/characters/childs/
    */
-  gamePublicPath:
+  gameSpritesPublicPath:
+    process.env.GAME_SPRITES_PUBLIC_PATH?.trim() ||
     process.env.GAME_PUBLIC_PATH?.trim() ||
     "assets/sprites/characters/childs/",
   /** MP3 da apresentação no modal — espelha public/ do frontend */

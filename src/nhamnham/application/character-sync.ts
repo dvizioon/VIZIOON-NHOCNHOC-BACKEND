@@ -76,8 +76,12 @@ export function saveCharacterRecord(
   const nome = input.nome.trim();
   const existing = findExistingCharacter(db, input);
   const id = existing?.id ?? input.id ?? randomUUID();
-  const cabecaStorage = input.cabecaStorage ?? existing?.cabeca_storage ?? null;
-  const vozStorage = input.vozStorage ?? existing?.voz_storage ?? null;
+  const cabecaStorage = input.cabecaStorage !== undefined
+    ? input.cabecaStorage
+    : (existing?.cabeca_storage ?? null);
+  const vozStorage = input.vozStorage !== undefined
+    ? input.vozStorage
+    : (existing?.voz_storage ?? null);
 
   if (existing) {
     db.run(
@@ -91,7 +95,7 @@ export function saveCharacterRecord(
         cabeca_path = ?,
         cabeca_storage = COALESCE(?, cabeca_storage),
         voz_path = ?,
-        voz_storage = COALESCE(?, voz_storage),
+        voz_storage = ?,
         ativo = ?,
         updated_at = ?
        WHERE id = ?`,

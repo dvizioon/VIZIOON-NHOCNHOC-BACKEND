@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { gameEnv } from "../config/env";
-import { syncCharacterHeadAsset, syncCharacterVoiceAsset, normalizeCabecaFilename, normalizeVozFilename } from "../application/character-assets";
+import { syncCharacterHeadAsset, normalizeCabecaFilename, normalizeVozFilename } from "../application/character-assets";
 import { findExistingCharacter, saveCharacterRecord } from "../application/character-sync";
 import { randomUUID } from "node:crypto";
 import type { Database } from "bun:sqlite";
@@ -34,7 +34,7 @@ export function loadCriancasJson(): CriancaJson[] {
   return Array.isArray(list) ? list : [];
 }
 
-/** Sincroniza game_characters + copia assets para storage/characters/{uuid}/ */
+/** Sincroniza game_characters a partir do criancas.json (metadados + cabeça opcional no storage). */
 export function syncCharacterCatalogFromJson(database?: Database): number {
   const db = database ?? getGameDb();
   const list = loadCriancasJson();
@@ -64,11 +64,6 @@ export function syncCharacterCatalogFromJson(database?: Database): number {
         cabecaFile,
         existing?.cabeca_storage ?? null,
       );
-      const vozStorage = syncCharacterVoiceAsset(
-        characterId,
-        vozFile,
-        existing?.voz_storage ?? null,
-      );
 
       const { created: isNew } = saveCharacterRecord(db, {
         id: characterId,
@@ -81,7 +76,7 @@ export function syncCharacterCatalogFromJson(database?: Database): number {
         cabecaPath: cabecaFile,
         cabecaStorage,
         vozPath: vozFile,
-        vozStorage,
+        vozStorage: null,
         ativo: item.ativo !== false,
       });
 
