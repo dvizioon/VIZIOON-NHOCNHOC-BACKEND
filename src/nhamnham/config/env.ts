@@ -42,7 +42,6 @@ export const gameEnv = {
    */
   gameSpritesPublicPath:
     process.env.GAME_SPRITES_PUBLIC_PATH?.trim() ||
-    process.env.GAME_PUBLIC_PATH?.trim() ||
     "assets/sprites/characters/childs/",
   /** MP3 da apresentação no modal — espelha public/ do frontend */
   gameVoicePublicPath:
