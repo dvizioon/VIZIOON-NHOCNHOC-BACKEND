@@ -190,6 +190,18 @@ export const gameRouter = new Elysia({ prefix: "/api/v1/game", tags: ["NHAMNHAM"
     },
   )
   .get(
+    "/scores/run/:scoreId/fruits",
+    ({ headers, params }) => {
+      const token = readBearerToken(headers.authorization);
+      const data = scoreService.getRunFruits(token, params.scoreId);
+      return success("Frutas da partida", { data });
+    },
+    {
+      headers: sessionHeaderSchema,
+      detail: { summary: "Frutas comidas na partida (só a sua)" },
+    },
+  )
+  .get(
     "/scores/:personId",
     ({ headers, params }) => {
       const token = readBearerToken(headers.authorization);

@@ -12,7 +12,7 @@ import type {
 
 const DEFAULT_CONFIG: GameUserConfig = {
   volumeMusica: 0.5,
-  volumeEfeitos: 0.5,
+  volumeEfeitos: 0.7,
   muted: false,
   modo: "toque",
 };
@@ -367,6 +367,8 @@ export const scoreService = {
       livesLeft?: number | null;
       levelLabel?: string | null;
       won?: boolean;
+      durationMs?: number | null;
+      fruitCounts?: Record<string, number> | null;
     },
   ) {
     const user = sessionService.requireUserByToken(token);
@@ -406,11 +408,17 @@ export const scoreService = {
 
     const scoreId = crypto.randomUUID();
     const points = Math.max(0, Math.round(input.points));
+    const durationMs = typeof input.durationMs === "number" && input.durationMs > 0
+      ? Math.round(input.durationMs)
+      : null;
+    const fruitCountsJson = input.fruitCounts && Object.keys(input.fruitCounts).length > 0
+      ? JSON.stringify(input.fruitCounts)
+      : null;
 
     db.run(
       `INSERT INTO game_scores
-       (id, user_id, person_id, points, lives_left, level_label, won, played_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, user_id, person_id, points, lives_left, level_label, won, duration_ms, fruit_counts_json, played_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         scoreId,
         user.id,
@@ -419,6 +427,8 @@ export const scoreService = {
         typeof input.livesLeft === "number" ? input.livesLeft : null,
         input.levelLabel ?? null,
         input.won ? 1 : 0,
+        durationMs,
+        fruitCountsJson,
         nowIso(),
       ],
     );
@@ -474,6 +484,47 @@ export const scoreService = {
         playedAt: row.played_at,
       }));
   },
+
+  getRunFruits(token: string, scoreId: string) {
+    const user = sessionService.requireUserByToken(token);
+    const db = getGameDb();
+
+    const row = db
+      .query<
+        {
+          user_id: string;
+          points: number;
+          duration_ms: number | null;
+          fruit_counts_json: string | null;
+        },
+        [string]
+      >(
+        `SELECT user_id, points, duration_ms, fruit_counts_json
+         FROM game_scores WHERE id = ?`,
+      )
+      .get(scoreId.trim());
+
+    if (!row || row.user_id !== user.id) {
+      throw new AppError("Partida não encontrada", 404, "NOT_FOUND");
+    }
+
+    let fruitCounts: Record<string, number> = {};
+    if (row.fruit_counts_json) {
+      try {
+        const parsed = JSON.parse(row.fruit_counts_json) as Record<string, number>;
+        if (parsed && typeof parsed === "object") fruitCounts = parsed;
+      } catch {
+        fruitCounts = {};
+      }
+    }
+
+    return {
+      scoreId,
+      points: row.points,
+      durationMs: row.duration_ms,
+      fruitCounts,
+    };
+  },
 };
 
 export interface RankingEntryDto {
@@ -481,6 +532,8 @@ export interface RankingEntryDto {
   displayName: string;
   personName: string;
   bestScore: number;
+  bestDurationMs: number | null;
+  scoreId: string;
 }
 
 export const rankingService = {
@@ -495,21 +548,34 @@ export const rankingService = {
           display_name: string;
           person_name: string;
           best_score: number;
+          best_duration_ms: number | null;
+          score_id: string;
         },
         [number]
       >(
-        `SELECT u.id AS user_id, u.display_name, p.nome AS person_name, best.best_score
+        `SELECT u.id AS user_id, u.display_name, p.nome AS person_name,
+                best.best_score, best.best_duration_ms, MIN(s.id) AS score_id
          FROM game_users u
          INNER JOIN (
-           SELECT user_id, MAX(points) AS best_score
+           SELECT user_id,
+                  MIN(duration_ms) AS best_duration_ms,
+                  MAX(points) AS best_score
            FROM game_scores
+           WHERE won = 1
+             AND duration_ms IS NOT NULL
+             AND duration_ms > 0
+             AND points >= 100
            GROUP BY user_id
          ) best ON best.user_id = u.id
-         INNER JOIN game_scores s ON s.user_id = u.id AND s.points = best.best_score
+         INNER JOIN game_scores s
+           ON s.user_id = u.id
+          AND s.duration_ms = best.best_duration_ms
+          AND s.won = 1
+          AND s.points >= 100
          INNER JOIN game_persons p ON p.id = s.person_id
          WHERE u.is_guest = 0
          GROUP BY u.id
-         ORDER BY best.best_score DESC, u.display_name COLLATE NOCASE ASC
+         ORDER BY best.best_duration_ms ASC, u.display_name COLLATE NOCASE ASC
          LIMIT ?`,
       )
       .all(safeLimit)
@@ -518,6 +584,8 @@ export const rankingService = {
         displayName: row.display_name,
         personName: row.person_name,
         bestScore: row.best_score,
+        bestDurationMs: row.best_duration_ms,
+        scoreId: row.score_id,
       }));
   },
 };

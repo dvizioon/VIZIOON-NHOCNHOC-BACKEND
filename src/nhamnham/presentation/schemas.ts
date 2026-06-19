@@ -38,6 +38,8 @@ export const saveScoreBodySchema = z.object({
   livesLeft: z.number().int().min(0).optional().nullable(),
   levelLabel: z.string().max(64).optional().nullable(),
   won: z.boolean().optional(),
+  durationMs: z.number().int().min(0).optional().nullable(),
+  fruitCounts: z.record(z.string(), z.number().int().min(0)).optional().nullable(),
 });
 
 export const registerCharacterBodySchema = z.object({

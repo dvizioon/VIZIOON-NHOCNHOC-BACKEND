@@ -32,6 +32,7 @@ bun run dev
 | POST | `/api/v1/game/scores` | Pontuação por personagem |
 | GET | `/api/v1/game/scores/:personId` | Histórico |
 
+
 **Visitante:** id temporário, não persiste personagem/score no servidor.
 
 **Personagens:** edite `backend/backup/criancas.json` → sync automático ao subir + `POST /characters/sync`. Assets copiados para `backend/storage/characters/{uuid}/` (`head.png` + `voice.mp3`).

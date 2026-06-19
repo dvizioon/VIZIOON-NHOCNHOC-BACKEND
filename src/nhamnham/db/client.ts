@@ -4,6 +4,8 @@ import { dirname } from "node:path";
 import { gameEnv } from "../config/env";
 import { migrateGameCharactersTable } from "./migrate-characters";
 import { migrateCharacterVoiceColumns } from "./migrate-character-voice";
+import { migrateScoreDurationColumn } from "./migrate-score-duration";
+import { migrateScoreFruitsColumn } from "./migrate-score-fruits";
 import { syncCharacterCatalogFromJson } from "./seed-characters";
 import { syncGameRulesFromJson } from "./seed-game-rules";
 
@@ -131,6 +133,8 @@ export function getGameDb(): Database {
   db.exec(SCHEMA);
   migrateGameCharactersTable(db);
   migrateCharacterVoiceColumns(db);
+  migrateScoreDurationColumn(db);
+  migrateScoreFruitsColumn(db);
   syncCharacterCatalogFromJson(db);
   syncGameRulesFromJson(db);
   return db;
